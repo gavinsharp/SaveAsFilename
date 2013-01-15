@@ -57,18 +57,30 @@ function startup(aData, aReason) {
 }
 
 function shutdown(aData, aReason) {
+  function log(msg) {
+    Components.utils.reportError("Gavin: " + msg);
+  }
+  log("Shutdown");
   if (aReason != APP_SHUTDOWN) {
-    let enumerator = wm.getEnumerator("navigator:browser");
+    log("Not app shutdown");
+    let enumerator = Services.wm.getEnumerator("navigator:browser");
     while (enumerator.hasMoreElements()) {
-      let win = enumerator.getNext();
-      if (win._saveAsFilename_getDefaultFileName)
+      let win = XPCNativeWrapper.unwrap(enumerator.getNext());
+      log("Found window");
+      if (win._saveAsFilename_getDefaultFileName) {
+        log("removing prop from window");
         win.getDefaultFileName = win._saveAsFilename_getDefaultFileName;
+        delete win._saveAsFilename_getDefaultFileName;
+      }
     }
 
     unloaders.forEach(function (f) {
       try {
+        log("unloading");
         f();
-      } catch (ex) {}
+      } catch (ex) {
+        log("unloading failed: " + ex);
+      }
     });
   }
 }
