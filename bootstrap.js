@@ -57,18 +57,11 @@ function startup(aData, aReason) {
 }
 
 function shutdown(aData, aReason) {
-  function log(msg) {
-    Components.utils.reportError("Gavin: " + msg);
-  }
-  log("Shutdown");
   if (aReason != APP_SHUTDOWN) {
-    log("Not app shutdown");
     let enumerator = Services.wm.getEnumerator("navigator:browser");
     while (enumerator.hasMoreElements()) {
       let win = XPCNativeWrapper.unwrap(enumerator.getNext());
-      log("Found window");
       if (win._saveAsFilename_getDefaultFileName) {
-        log("removing prop from window");
         win.getDefaultFileName = win._saveAsFilename_getDefaultFileName;
         delete win._saveAsFilename_getDefaultFileName;
       }
@@ -76,11 +69,8 @@ function shutdown(aData, aReason) {
 
     unloaders.forEach(function (f) {
       try {
-        log("unloading");
         f();
-      } catch (ex) {
-        log("unloading failed: " + ex);
-      }
+      } catch (ex) {}
     });
   }
 }
@@ -88,7 +78,6 @@ function shutdown(aData, aReason) {
 function install(aData, aReason) { }
 
 function uninstall(aData, aReason) { }
-
 
 /* Code from: https://github.com/Mardak/restartless/blob/watchWindows/bootstrap.js */
 let unloaders = [];
@@ -134,4 +123,3 @@ function watchWindows(callback) {
   Services.ww.registerNotification(windowWatcher);
   unloaders.push(function() Services.ww.unregisterNotification(windowWatcher));
 }
-
